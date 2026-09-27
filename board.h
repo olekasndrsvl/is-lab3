@@ -7,16 +7,33 @@
 #include <vector>
 
 struct Position {
-    int x; // [0..7]
-    int y; // обойдемся без сложностей с буквами [0..7]
+    int x; // [0..width-1]
+    int y; // [0..height-1]
 };
 
 using Path = std::vector<Position>;
 
 class Board {
 public:
-    static constexpr int size = 8;
-    static constexpr int cellCount = size * size;
+    explicit Board(int width = 8, int height = 8)
+        : _width(width), _height(height) {
+        if (width < 1 || width > 8 || height < 1 || height > 8) {
+            throw std::invalid_argument("Board dimensions must be in [1, 8]");
+        }
+    }
+
+    inline int width() const noexcept {
+        return _width;
+    }
+
+    inline int height() const noexcept {
+        return _height;
+    }
+
+    inline int cellCount() const noexcept {
+        return _width * _height;
+    }
+
 
     Path bfs(Position start);
     Path dfs(Position start);
@@ -25,8 +42,8 @@ public:
 
     void writePathToFile(const Path& path, const std::filesystem::path& filename) const;
 
-    static inline bool isInside(int x, int y) noexcept {
-        return x >= 0 && x < size && y >= 0 && y < size;
+    inline bool isInside(int x, int y) const noexcept {
+        return x >= 0 && x < _width && y >= 0 && y < _height;
     }
 
     inline void markVisited(int x, int y) {
@@ -42,7 +59,9 @@ public:
     }
 
     inline bool isComplete() const noexcept {
-        return _field == std::numeric_limits<std::uint64_t>::max();
+        const auto fullMask = std::numeric_limits<std::uint64_t>::max()
+                              >> (64 - cellCount());
+        return _field == fullMask;
     }
 
     inline void reset() noexcept {
@@ -50,12 +69,14 @@ public:
     }
 
 private:
+    int _width;
+    int _height;
     std::uint64_t _field = 0;
 
-    static inline std::uint64_t mask(int x, int y) {
+    inline std::uint64_t mask(int x, int y) const {
         if (!isInside(x, y)) {
-            throw std::out_of_range("Board coordinates must be in [0, 7]");
+            throw std::out_of_range("Coordinates are outside the board");
         }
-        return std::uint64_t{1} << (y * size + x);
+        return std::uint64_t{1} << (y * _width + x);
     }
 };
