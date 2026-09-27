@@ -73,6 +73,8 @@ private:
     int _height;
     std::uint64_t _field = 0;
 
+    bool depthLimitedSearch(Position current, int remainingDepth, Path& path);
+
     inline std::uint64_t mask(int x, int y) const {
         if (!isInside(x, y)) {
             throw std::out_of_range("Coordinates are outside the board");
